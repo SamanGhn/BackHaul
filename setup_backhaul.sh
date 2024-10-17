@@ -37,9 +37,6 @@ if [ "$location" == "y" ]; then
         # Get token for the foreign server
         read -p "Please enter the token for foreign server $i: " token
 
-        # Get mux_session value for the foreign server
-        read -p "Please enter the mux_session value for foreign server $i: " mux_session
-
         # Get nodelay value from user
         read -p "Do you want to enable nodelay? (true/false): " nodelay
 
@@ -131,39 +128,47 @@ EOL
         sudo systemctl status backhaul_$i.service
     done
 
-    # If the server is located outside Iran
-    else
-        echo "This server is located outside Iran, applying settings for outside..."
+# If the server is located outside Iran
+else
+    echo "This server is located outside Iran, applying settings for outside..."
 
-        # Get the IP of the Iran server from the user
-        read -p "Please enter the IP address of the Iran server: " ip_iran
+    # Get the IP of the Iran server from the user
+    read -p "Please enter the IP address of the Iran server: " ip_iran
 
-        # Get the foreign server index
-        read -p "Which foreign server is this in relation to the Iran server? " server_index
+    # Get the foreign server index
+    read -p "Which foreign server is this in relation to the Iran server? " server_index
 
-        # Get tunnel port for the foreign server
-        read -p "Enter the tunnel port number for foreign server $server_index: " tunnelport
+    # Get tunnel port for the foreign server
+    read -p "Enter the tunnel port number for foreign server $server_index: " tunnelport
 
-        # Get token for the foreign server
-        read -p "Please enter the token for foreign server $server_index: " token
+    # Get token for the foreign server
+    read -p "Please enter the token for foreign server $server_index: " token
 
-        # Get mux_session value for the foreign server
-        read -p "Please enter the mux_session value for foreign server $server_index: " mux_session
+    # Get nodelay value from user
+    read -p "Do you want to enable nodelay? (true/false): " nodelay
 
-        # Create a config file for the foreign server with the given index
-        sudo tee /root/backhaul/config_$server_index.toml > /dev/null <<EOL
+    # Get web port from user
+    read -p "Please enter the web port for foreign server $server_index: " web_port
+
+    # Create a config file for the foreign server with the given index
+    sudo tee /root/backhaul/config_$server_index.toml > /dev/null <<EOL
 [client]
 remote_addr = "$ip_iran:$tunnelport"
 transport = "tcp"
 token = "$token"
-keepalive_period = 20
-nodelay = false
-retry_interval = 1
-mux_session = $mux_session
+connection_pool = 8
+keepalive_period = 75
+dial_timeout = 10
+nodelay = $nodelay
+retry_interval = 3
+sniffer = false
+web_port = $web_port
+sniffer_log = "/root/backhaul.json"
+log_level = "info"
 EOL
 
-        # Create a service file for the foreign server with the given index
-        sudo tee /etc/systemd/system/backhaul_$server_index.service > /dev/null <<EOL
+    # Create a service file for the foreign server with the given index
+    sudo tee /etc/systemd/system/backhaul_$server_index.service > /dev/null <<EOL
 [Unit]
 Description=Backhaul Reverse Tunnel Service for Server $server_index
 After=network.target
@@ -179,12 +184,12 @@ LimitNOFILE=1048576
 WantedBy=multi-user.target
 EOL
 
-        # Reload systemd, enable and start the service
-        sudo systemctl daemon-reload
-        sudo systemctl enable backhaul_$server_index.service
-        sudo systemctl start backhaul_$server_index.service
-        sudo systemctl status backhaul_$server_index.service
-    fi
+    # Reload systemd, enable and start the service
+    sudo systemctl daemon-reload
+    sudo systemctl enable backhaul_$server_index.service
+    sudo systemctl start backhaul_$server_index.service
+    sudo systemctl status backhaul_$server_index.service
+fi
 }
 
 # Function to edit backhaul configuration
