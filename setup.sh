@@ -26,110 +26,78 @@ if [ "$location" == "y" ]; then
     # Get the number of foreign servers
     read -p "How many foreign servers do you have? " num_servers
 
-    # Loop for each foreign server
-    for ((i=1; i<=num_servers; i++))
-    do
-        echo "Configuring foreign server number $i..."
+# حلقه برای هر سرور
+for ((i=1; i<=num_servers; i++))
+do
+    echo "Configuring foreign server number $i..."
 
-        # Get tunnel port for the foreign server
-        read -p "Enter the tunnel port number for foreign server $i: " tunnelport
+    # گرفتن پورت تونل، توکن و سایر اطلاعات از کاربر برای هر سرور
+    read -p "Enter the tunnel port number for foreign server $i: " tunnelport
+    read -p "Please enter the token for foreign server $i: " token
+    read -p "Do you want to enable nodelay? (true/false): " nodelay
+    read -p "Please enter the web port for foreign server $i: " web_port
 
-        # Get token for the foreign server
-        read -p "Please enter the token for foreign server $i: " token
+    # انتخاب نحوه ورود پورت‌ها (دستی یا رنج)
+    read -p "Do you want to enter the ports manually or as a range? (m/r): " method
 
-        # Get nodelay value from user
-        read -p "Do you want to enable nodelay? (true/false): " nodelay
+    if [ "$method" == "m" ]; then
+        read -p "Do you want to specify separate input and output ports? (y/n): " separate_ports
 
-        # Get web port from user
-        read -p "Please enter the web port for foreign server $i: " web_port
+        if [ "$separate_ports" == "y" ]; then
+            read -p "Please enter the input ports as a comma-separated list (e.g., 2020,2021,2027): " input_ports
+            read -p "Please enter the output ports as a comma-separated list (e.g., 3020,3021,3027): " output_ports
 
-# Choose how to input ports (individually or range)
-read -p "Do you want to enter the ports manually or as a range? (m/r): " method
+            IFS=',' read -r -a input_ports_array <<< "$input_ports"
+            IFS=',' read -r -a output_ports_array <<< "$output_ports"
 
-if [ "$method" == "m" ]; then
-    # New option: Ask if user wants different input and output ports
-    read -p "Do you want to specify separate input and output ports? (y/n): " separate_ports
+            ports_list=()
 
-    if [ "$separate_ports" == "y" ]; then
-        # Get the list of input and output ports from the user
-        read -p "Please enter the input ports as a comma-separated list (e.g., 2020,2021,2027): " input_ports
-        read -p "Please enter the output ports as a comma-separated list (e.g., 3020,3021,3027): " output_ports
+            for ((j=0; j<${#input_ports_array[@]}; j++))
+            do
+                input_port="${input_ports_array[j]}"
+                output_port="${output_ports_array[j]}"
+                ports_list+=("\"$input_port=$output_port\"")
+            done
+        else
+            read -p "Please enter all the ports as a comma-separated list (e.g., 2020,2021,2027): " port_list_input
+            IFS=',' read -r -a ports_array <<< "$port_list_input"
+            ports_list=()
 
-        # Create arrays from the comma-separated lists
-        IFS=',' read -r -a input_ports_array <<< "$input_ports"
-        IFS=',' read -r -a output_ports_array <<< "$output_ports"
+            for port in "${ports_array[@]}"
+            do
+                ports_list+=("\"$port=$port\"")
+            done
+        fi
+    elif [ "$method" == "r" ]; then
+        read -p "Please enter the start port: " start_port
+        read -p "Please enter the end port: " end_port
+        read -p "Do you want to specify separate input and output ports for the range? (y/n): " separate_ports
 
-        # Initialize an empty array to store formatted ports
-        ports_list=()
+        if [ "$separate_ports" == "y" ]; then
+            read -p "Please enter the start output port: " start_output_port
+            read -p "Please enter the end output port: " end_output_port
 
-        # Loop through the arrays and format each port pair
-        for ((i=0; i<${#input_ports_array[@]}; i++))
-        do
-            input_port="${input_ports_array[i]}"
-            output_port="${output_ports_array[i]}"
-            ports_list+=("\"$input_port=$output_port\"")
-        done
-
+            ports_list=()
+            for ((in_port=start_port, out_port=start_output_port; in_port<=end_port; in_port++, out_port++))
+            do
+                ports_list+=("\"$in_port=$out_port\"")
+            done
+        else
+            ports_list=()
+            for ((port=start_port; port<=end_port; port++))
+            do
+                ports_list+=("\"$port=$port\"")
+            done
+        fi
     else
-        # If separate_ports is 'n', just use the same port for input and output
-        read -p "Please enter all the ports as a comma-separated list (e.g., 2020,2021,2027): " port_list_input
-
-        # Create an array from the comma-separated list
-        IFS=',' read -r -a ports_array <<< "$port_list_input"
-
-        # Initialize an empty array to store formatted ports
-        ports_list=()
-
-        # Loop through the array and format each port (same for input/output)
-        for port in "${ports_array[@]}"
-        do
-            ports_list+=("\"$port=$port\"")
-        done
+        echo "Invalid input method. Please enter 'm' for manually or 'r' for range."
+        exit 1
     fi
 
-elif [ "$method" == "r" ]; then
-    # Get the port range from the user
-    read -p "Please enter the start port: " start_port
-    read -p "Please enter the end port: " end_port
+    ports_string=$(IFS=,; echo "${ports_list[*]}")
 
-    # New option: Ask if user wants different input and output ports
-    read -p "Do you want to specify separate input and output ports for the range? (y/n): " separate_ports
-
-    if [ "$separate_ports" == "y" ]; then
-        # Get the start and end port for output
-        read -p "Please enter the start output port: " start_output_port
-        read -p "Please enter the end output port: " end_output_port
-
-        # Create an array to store the ports
-        ports_list=()
-
-        # Generate ports based on the range and add them to the array with double quotes
-        for ((in_port=start_port, out_port=start_output_port; in_port<=end_port; in_port++, out_port++))
-        do
-            ports_list+=("\"$in_port=$out_port\"")
-        done
-
-    else
-        # Create an array to store the ports (same input/output)
-        ports_list=()
-
-        # Generate ports based on the range and add them to the array with double quotes
-        for ((port=start_port; port<=end_port; port++))
-        do
-            ports_list+=("\"$port=$port\"")
-        done
-    fi
-
-else
-    echo "Invalid input method. Please enter 'm' for manually or 'r' for range."
-    exit 1
-fi
-
-# Convert the array to a string with appropriate separators for the config file
-ports_string=$(IFS=,; echo "${ports_list[*]}")
-
-        # Create a config file for the Iran server with settings for each foreign server
-        sudo tee /root/backhaul/config_$i.toml > /dev/null <<EOL
+    # ایجاد فایل کانفیگ برای هر سرور
+    sudo tee /root/backhaul/config_$i.toml > /dev/null <<EOL
 [server]
 bind_addr = "0.0.0.0:$tunnelport"
 transport = "tcp"
@@ -148,8 +116,8 @@ $ports_string
 ]
 EOL
 
-        # Create a service file for the foreign server with a specific number (i)
-        sudo tee /etc/systemd/system/backhaul_$i.service > /dev/null <<EOL
+    # ایجاد فایل سرویس برای هر سرور
+    sudo tee /etc/systemd/system/backhaul_$i.service > /dev/null <<EOL
 [Unit]
 Description=Backhaul Reverse Tunnel Service for Server $i
 After=network.target
@@ -165,12 +133,13 @@ LimitNOFILE=1048576
 WantedBy=multi-user.target
 EOL
 
-        # Reload systemd, enable and start the service
-        sudo systemctl daemon-reload
-        sudo systemctl enable backhaul_$i.service
-        sudo systemctl start backhaul_$i.service
-        sudo systemctl status backhaul_$i.service
-    done
+    # اجرای سرویس برای هر سرور
+    sudo systemctl daemon-reload
+    sudo systemctl enable backhaul_$i.service
+    sudo systemctl start backhaul_$i.service
+    sudo systemctl status backhaul_$i.service
+
+done
 
 # If the server is located outside Iran
 else
