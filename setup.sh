@@ -198,10 +198,9 @@ edit_backhaul() {
     echo "  Backhaul Edit Menu"
     echo "---------------------------------"
     echo "1) Edit Token"
-    echo "2) Edit Mux Session"
-    echo "3) Add Ports"
-    echo "4) Remove Ports"
-    echo "5) Return to Main Menu"
+    echo "2) Add Ports"
+    echo "3) Remove Ports"
+    echo "4) Return to Main Menu"
     echo "---------------------------------"
 
     read -p "Please choose an option: " edit_option
