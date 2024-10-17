@@ -8,7 +8,7 @@ install_backhaul() {
     mkdir -p backhaul
     cd backhaul
 
-    wget https://github.com/Musixal/Backhaul/releases/download/v0.1.1/backhaul_linux_amd64.tar.gz -O backhaul_linux.tar.gz
+    wget https://github.com/Musixal/Backhaul/releases/download/v0.6.0/backhaul_linux_amd64.tar.gz -O backhaul_linux.tar.gz
     tar -xf backhaul_linux.tar.gz
     rm backhaul_linux.tar.gz LICENSE README.md
     chmod +x backhaul
@@ -19,88 +19,96 @@ install_backhaul() {
 
     # Get server location from the user
     read -p "Is this server located in Iran? (y/n): " location 
+# If the server is located in Iran
+if [ "$location" == "y" ]; then
+    echo "This server is located in Iran, applying settings for Iran..."
 
-    # If the server is located in Iran
-    if [ "$location" == "y" ]; then
-        echo "This server is located in Iran, applying settings for Iran..."
+    # Get the number of foreign servers
+    read -p "How many foreign servers do you have? " num_servers
 
-        # Get the number of foreign servers
-        read -p "How many foreign servers do you have? " num_servers
+    # Loop for each foreign server
+    for ((i=1; i<=num_servers; i++))
+    do
+        echo "Configuring foreign server number $i..."
 
-        # Loop for each foreign server
-        for ((i=1; i<=num_servers; i++))
-        do
-            echo "Configuring foreign server number $i..."
+        # Get tunnel port for the foreign server
+        read -p "Enter the tunnel port number for foreign server $i: " tunnelport
 
-            # Get tunnel port for the foreign server
-            read -p "Enter the tunnel port number for foreign server $i: " tunnelport
+        # Get token for the foreign server
+        read -p "Please enter the token for foreign server $i: " token
 
-            # Get token for the foreign server
-            read -p "Please enter the token for foreign server $i: " token
+        # Get mux_session value for the foreign server
+        read -p "Please enter the mux_session value for foreign server $i: " mux_session
 
-            # Get mux_session value for the foreign server
-            read -p "Please enter the mux_session value for foreign server $i: " mux_session
+        # Get nodelay value from user
+        read -p "Do you want to enable nodelay? (true/false): " nodelay
 
-            # Choose how to input ports (individually or range)
-            read -p "Do you want to enter the ports manually or as a range? (m/r): " method
+        # Get web port from user
+        read -p "Please enter the web port for foreign server $i: " web_port
 
-            if [ "$method" == "m" ]; then
-                # Get the list of ports from the user as a comma-separated string
-                read -p "Please enter all the ports as a comma-separated list (e.g., 2020,2021,2027): " port_list_input
+        # Choose how to input ports (individually or range)
+        read -p "Do you want to enter the ports manually or as a range? (m/r): " method
 
-                # Create an array from the comma-separated list
-                IFS=',' read -r -a ports_array <<< "$port_list_input"
+        if [ "$method" == "m" ]; then
+            # Get the list of ports from the user as a comma-separated string
+            read -p "Please enter all the ports as a comma-separated list (e.g., 2020,2021,2027): " port_list_input
 
-                # Initialize an empty array to store formatted ports
-                ports_list=()
+            # Create an array from the comma-separated list
+            IFS=',' read -r -a ports_array <<< "$port_list_input"
 
-                # Loop through the array and format each port
-                for port in "${ports_array[@]}"
-                do
-                    ports_list+=("\"$port=$port\"")
-                done
+            # Initialize an empty array to store formatted ports
+            ports_list=()
 
-            elif [ "$method" == "r" ]; then
-                # Get the port range from the user
-                read -p "Please enter the start port: " start_port
-                read -p "Please enter the end port: " end_port
+            # Loop through the array and format each port
+            for port in "${ports_array[@]}"
+            do
+                ports_list+=("\"$port=$port\"")
+            done
 
-                # Create an array to store the ports
-                ports_list=()
+        elif [ "$method" == "r" ]; then
+            # Get the port range from the user
+            read -p "Please enter the start port: " start_port
+            read -p "Please enter the end port: " end_port
 
-                # Generate ports based on the range and add them to the array with double quotes
-                for ((port=start_port; port<=end_port; port++))
-                do
-                    ports_list+=("\"$port=$port\"")
-                done
+            # Create an array to store the ports
+            ports_list=()
 
-            else
-                echo "Invalid input method. Please enter 'm' for manually or 'r' for range."
-                exit 1
-            fi
+            # Generate ports based on the range and add them to the array with double quotes
+            for ((port=start_port; port<=end_port; port++))
+            do
+                ports_list+=("\"$port=$port\"")
+            done
 
-            # Convert the array to a string with appropriate separators for the config file
-            ports_string=$(IFS=,; echo "${ports_list[*]}")
+        else
+            echo "Invalid input method. Please enter 'm' for manually or 'r' for range."
+            exit 1
+        fi
 
-            # Create a config file for the Iran server with settings for each foreign server
-            sudo tee /root/backhaul/config_$i.toml > /dev/null <<EOL
+        # Convert the array to a string with appropriate separators for the config file
+        ports_string=$(IFS=,; echo "${ports_list[*]}")
+
+        # Create a config file for the Iran server with settings for each foreign server
+        sudo tee /root/backhaul/config_$i.toml > /dev/null <<EOL
 [server]
 bind_addr = "0.0.0.0:$tunnelport"
 transport = "tcp"
+accept_udp = false
 token = "$token"
-keepalive_period = 20
-nodelay = false
+keepalive_period = 75
+nodelay = $nodelay
+heartbeat = 40
 channel_size = 2048
-connection_pool = 8
-mux_session = $mux_session
-
+sniffer = false
+web_port = $web_port
+sniffer_log = "/root/backhaul.json"
+log_level = "info"
 ports = [ 
 $ports_string
 ]
 EOL
 
-            # Create a service file for the foreign server with a specific number (i)
-            sudo tee /etc/systemd/system/backhaul_$i.service > /dev/null <<EOL
+        # Create a service file for the foreign server with a specific number (i)
+        sudo tee /etc/systemd/system/backhaul_$i.service > /dev/null <<EOL
 [Unit]
 Description=Backhaul Reverse Tunnel Service for Server $i
 After=network.target
@@ -116,12 +124,12 @@ LimitNOFILE=1048576
 WantedBy=multi-user.target
 EOL
 
-            # Reload systemd, enable and start the service
-            sudo systemctl daemon-reload
-            sudo systemctl enable backhaul_$i.service
-            sudo systemctl start backhaul_$i.service
-            sudo systemctl status backhaul_$i.service
-        done
+        # Reload systemd, enable and start the service
+        sudo systemctl daemon-reload
+        sudo systemctl enable backhaul_$i.service
+        sudo systemctl start backhaul_$i.service
+        sudo systemctl status backhaul_$i.service
+    done
 
     # If the server is located outside Iran
     else
