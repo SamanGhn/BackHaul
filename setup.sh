@@ -211,15 +211,12 @@ edit_backhaul() {
             edit_token
             ;;
         2)
-            edit_mux_session
-            ;;
-        3)
             add_ports
             ;;
-        4)
+        3)
             remove_ports
             ;;
-        5)
+        4)
             return
             ;;
         *)
@@ -236,20 +233,6 @@ edit_token() {
     # Modify the token in the server configuration file
     sed -i "s/token = .*/token = \"$new_token\"/" /root/backhaul/config_$server_number.toml
     echo "Token updated successfully for server $server_number."
-
-    # Reload and restart the service
-    sudo systemctl daemon-reload
-    sudo systemctl restart backhaul_$server_number.service
-}
-
-# Function to edit mux_session
-edit_mux_session() {
-    read -p "Enter the number of the server you want to edit the mux_session for: " server_number
-    read -p "Enter the new mux_session value: " new_mux_session
-
-    # Modify the mux_session in the server configuration file
-    sed -i "s/mux_session = .*/mux_session = $new_mux_session/" /root/backhaul/config_$server_number.toml
-    echo "Mux session updated successfully for server $server_number."
 
     # Reload and restart the service
     sudo systemctl daemon-reload
