@@ -43,46 +43,90 @@ if [ "$location" == "y" ]; then
         # Get web port from user
         read -p "Please enter the web port for foreign server $i: " web_port
 
-        # Choose how to input ports (individually or range)
-        read -p "Do you want to enter the ports manually or as a range? (m/r): " method
+# Choose how to input ports (individually or range)
+read -p "Do you want to enter the ports manually or as a range? (m/r): " method
 
-        if [ "$method" == "m" ]; then
-            # Get the list of ports from the user as a comma-separated string
-            read -p "Please enter all the ports as a comma-separated list (e.g., 2020,2021,2027): " port_list_input
+if [ "$method" == "m" ]; then
+    # New option: Ask if user wants different input and output ports
+    read -p "Do you want to specify separate input and output ports? (y/n): " separate_ports
 
-            # Create an array from the comma-separated list
-            IFS=',' read -r -a ports_array <<< "$port_list_input"
+    if [ "$separate_ports" == "y" ]; then
+        # Get the list of input and output ports from the user
+        read -p "Please enter the input ports as a comma-separated list (e.g., 2020,2021,2027): " input_ports
+        read -p "Please enter the output ports as a comma-separated list (e.g., 3020,3021,3027): " output_ports
 
-            # Initialize an empty array to store formatted ports
-            ports_list=()
+        # Create arrays from the comma-separated lists
+        IFS=',' read -r -a input_ports_array <<< "$input_ports"
+        IFS=',' read -r -a output_ports_array <<< "$output_ports"
 
-            # Loop through the array and format each port
-            for port in "${ports_array[@]}"
-            do
-                ports_list+=("\"$port=$port\"")
-            done
+        # Initialize an empty array to store formatted ports
+        ports_list=()
 
-        elif [ "$method" == "r" ]; then
-            # Get the port range from the user
-            read -p "Please enter the start port: " start_port
-            read -p "Please enter the end port: " end_port
+        # Loop through the arrays and format each port pair
+        for ((i=0; i<${#input_ports_array[@]}; i++))
+        do
+            input_port="${input_ports_array[i]}"
+            output_port="${output_ports_array[i]}"
+            ports_list+=("\"$input_port=$output_port\"")
+        done
 
-            # Create an array to store the ports
-            ports_list=()
+    else
+        # If separate_ports is 'n', just use the same port for input and output
+        read -p "Please enter all the ports as a comma-separated list (e.g., 2020,2021,2027): " port_list_input
 
-            # Generate ports based on the range and add them to the array with double quotes
-            for ((port=start_port; port<=end_port; port++))
-            do
-                ports_list+=("\"$port=$port\"")
-            done
+        # Create an array from the comma-separated list
+        IFS=',' read -r -a ports_array <<< "$port_list_input"
 
-        else
-            echo "Invalid input method. Please enter 'm' for manually or 'r' for range."
-            exit 1
-        fi
+        # Initialize an empty array to store formatted ports
+        ports_list=()
 
-        # Convert the array to a string with appropriate separators for the config file
-        ports_string=$(IFS=,; echo "${ports_list[*]}")
+        # Loop through the array and format each port (same for input/output)
+        for port in "${ports_array[@]}"
+        do
+            ports_list+=("\"$port=$port\"")
+        done
+    fi
+
+elif [ "$method" == "r" ]; then
+    # Get the port range from the user
+    read -p "Please enter the start port: " start_port
+    read -p "Please enter the end port: " end_port
+
+    # New option: Ask if user wants different input and output ports
+    read -p "Do you want to specify separate input and output ports for the range? (y/n): " separate_ports
+
+    if [ "$separate_ports" == "y" ]; then
+        # Get the start and end port for output
+        read -p "Please enter the start output port: " start_output_port
+        read -p "Please enter the end output port: " end_output_port
+
+        # Create an array to store the ports
+        ports_list=()
+
+        # Generate ports based on the range and add them to the array with double quotes
+        for ((in_port=start_port, out_port=start_output_port; in_port<=end_port; in_port++, out_port++))
+        do
+            ports_list+=("\"$in_port=$out_port\"")
+        done
+
+    else
+        # Create an array to store the ports (same input/output)
+        ports_list=()
+
+        # Generate ports based on the range and add them to the array with double quotes
+        for ((port=start_port; port<=end_port; port++))
+        do
+            ports_list+=("\"$port=$port\"")
+        done
+    fi
+
+else
+    echo "Invalid input method. Please enter 'm' for manually or 'r' for range."
+    exit 1
+fi
+
+# Convert the array to a string with appropriate separators for the config file
+ports_string=$(IFS=,; echo "${ports_list[*]}")
 
         # Create a config file for the Iran server with settings for each foreign server
         sudo tee /root/backhaul/config_$i.toml > /dev/null <<EOL
