@@ -337,14 +337,37 @@ uninstall_backhaul() {
         echo "Removed /root/backhaul directory"
     fi
 
-    # Reload systemd and reset failed services after all operations are done
+    # Reload systemd to apply changes
     sudo systemctl daemon-reload
     sudo systemctl reset-failed
 
+    # Ask the user if they want to remove logs and additional settings
+    read -p "Do you want to remove logs and additional settings (log_level, web_port, sniffer_log)? (y/n): " remove_logs
+
+    if [ "$remove_logs" == "y" ]; then
+        echo "Removing logs and additional configuration settings..."
+
+        # Remove log files
+        if [ -f /root/backhaul.json ]; then
+            sudo rm /root/backhaul.json
+            echo "Removed /root/backhaul.json"
+        fi
+
+        # Loop through all remaining configuration files and remove log_level, web_port, and sniffer_log
+        for config_file in /root/backhaul/config_*.toml; do
+            if [ -f "$config_file" ]; then
+                sudo sed -i '/log_level/d' "$config_file"
+                sudo sed -i '/web_port/d' "$config_file"
+                sudo sed -i '/sniffer_log/d' "$config_file"
+                echo "Removed log_level, web_port, and sniffer_log from $config_file"
+            fi
+        done
+
+        echo "Logs and additional settings removed."
+    fi
+
     echo "Backhaul uninstalled successfully."
 }
-
-
 # Function to update backhaul
 update_backhaul() {
     echo "Updating backhaul..."
