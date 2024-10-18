@@ -290,4 +290,9 @@ while true; do
             echo -e "${RED}Invalid option, please try again.${RESET}"
             ;;
     esac
+    # بررسی اینکه آیا باید به منوی اصلی برگردیم
+    if [ "$BACK_TO_MAIN" = true ]; then
+        BACK_TO_MAIN=false  # بازنشانی برای بار بعدی
+        continue
+    fi
 done
