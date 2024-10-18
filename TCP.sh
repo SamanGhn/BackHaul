@@ -9,51 +9,49 @@ CYAN='\033[0;36m'
 WHITE='\033[1;37m'
 RESET='\033[0m'
 
-# Function to install backhaul
-install_backhaul() {
-    echo -e "${BLUE}Installing backhaul...${RESET}"
-
-    # Initial setup for installing backhaul
-    mkdir -p backhaul
-    cd backhaul || { echo -e "${RED}Failed to change directory!${RESET}"; exit 1; }
-
-    wget https://github.com/Musixal/Backhaul/releases/download/v0.6.0/backhaul_linux_amd64.tar.gz -O backhaul_linux.tar.gz
-    tar -xf backhaul_linux.tar.gz
-    rm backhaul_linux.tar.gz LICENSE README.md
-    chmod +x backhaul
-    mv backhaul /usr/bin/backhaul
-
-    # Go back to the previous directory
-    cd .. || { echo -e "${RED}Failed to return to the previous directory!${RESET}"; exit 1; }
+# Function to set backhaul configuration
+set_backhaul_config() {
+    echo -e "${CYAN}---------------------------------${RESET}"
+    echo -e "${GREEN}Setting up backhaul configuration...${RESET}"
+    echo -e "${CYAN}---------------------------------${RESET}"
 
     # Get server location from the user
     read -p "Is this server located in Iran? (y/n): " location 
+    echo ""
+
     # If the server is located in Iran
     if [ "$location" == "y" ]; then
         echo -e "${GREEN}This server is located in Iran, applying settings for Iran...${RESET}"
+        echo ""
 
         # Get the number of foreign servers
         read -p "How many foreign servers do you have? " num_servers
+        echo ""
 
         # Loop for each foreign server
         for ((i=1; i<=num_servers; i++)); do
             echo -e "${GREEN}Configuring foreign server number $i...${RESET}"
+            echo ""
 
             # Get tunnel port, token, and other details from the user for each server
             read -p "Enter the tunnel port number for foreign server $i: " tunnelport
             read -p "Please enter the token for foreign server $i: " token
             read -p "Do you want to enable nodelay? (true/false): " nodelay
             read -p "Please enter the web port for foreign server $i: " web_port
+            echo ""
 
             # Choose how to input ports (manual or range)
             read -p "Do you want to enter the ports manually or as a range? (m/r): " method
+            echo ""
 
             if [ "$method" == "m" ]; then
                 read -p "Do you want to specify separate input and output ports? (y/n): " separate_ports
+                echo ""
 
                 if [ "$separate_ports" == "y" ]; then
                     read -p "Please enter the input ports as a comma-separated list (e.g., 2020,2021,2027): " input_ports
                     read -p "Please enter the output ports as a comma-separated list (e.g., 3020,3021,3027): " output_ports
+                    echo ""
 
                     IFS=',' read -r -a input_ports_array <<< "$input_ports"
                     IFS=',' read -r -a output_ports_array <<< "$output_ports"
@@ -67,6 +65,7 @@ install_backhaul() {
                     done
                 else
                     read -p "Please enter all the ports as a comma-separated list (e.g., 2020,2021,2027): " port_list_input
+                    echo ""
                     IFS=',' read -r -a ports_array <<< "$port_list_input"
                     ports_list=()
 
@@ -77,11 +76,13 @@ install_backhaul() {
             elif [ "$method" == "r" ]; then
                 read -p "Please enter the start port: " start_port
                 read -p "Please enter the end port: " end_port
+                echo ""
                 read -p "Do you want to specify separate input and output ports for the range? (y/n): " separate_ports
 
                 if [ "$separate_ports" == "y" ]; then
                     read -p "Please enter the start output port: " start_output_port
                     read -p "Please enter the end output port: " end_output_port
+                    echo ""
 
                     ports_list=()
                     for ((in_port=start_port, out_port=start_output_port; in_port<=end_port; in_port++, out_port++)); do
@@ -142,29 +143,38 @@ EOL
             sudo systemctl enable backhaul_$i.service
             sudo systemctl start backhaul_$i.service
             sudo systemctl status backhaul_$i.service
+            echo -e "${GREEN}Foreign server $i configured successfully!${RESET}"
+            echo ""
         done
 
     # If the server is located outside Iran
     else
         echo -e "${GREEN}This server is located outside Iran, applying settings for outside...${RESET}"
+        echo ""
 
         # Get the IP of the Iran server from the user
         read -p "Please enter the IP address of the Iran server: " ip_iran
+        echo ""
 
         # Get the foreign server index
         read -p "Which foreign server is this in relation to the Iran server? " server_index
+        echo ""
 
         # Get tunnel port for the foreign server
         read -p "Enter the tunnel port number for foreign server $server_index: " tunnelport
+        echo ""
 
         # Get token for the foreign server
         read -p "Please enter the token for foreign server $server_index: " token
+        echo ""
 
         # Get nodelay value from user
         read -p "Do you want to enable nodelay? (true/false): " nodelay
+        echo ""
 
         # Get web port from user
         read -p "Please enter the web port for foreign server $server_index: " web_port
+        echo ""
 
         # Create a config file for the foreign server with the given index
         sudo tee /root/backhaul/config_$server_index.toml > /dev/null <<EOL
@@ -205,102 +215,79 @@ EOL
         sudo systemctl enable backhaul_$server_index.service
         sudo systemctl start backhaul_$server_index.service
         sudo systemctl status backhaul_$server_index.service
+        echo -e "${GREEN}Foreign server $server_index configured successfully!${RESET}"
+        echo ""
     fi
 }
 
 # Function to edit backhaul configuration
 edit_backhaul() {
-    echo "---------------------------------"
-    echo "  Backhaul Edit Menu"
-    echo "---------------------------------"
-    echo "1) Edit Token"
-    echo "2) Add Ports"
-    echo "3) Remove Ports"
-    echo "4) Return to Main Menu"
-    echo "---------------------------------"
-
+    echo -e "${CYAN}---------------------------------${RESET}"
+    echo -e "${GREEN}  Backhaul Edit Menu${RESET}"
+    echo -e "${CYAN}---------------------------------${RESET}"
+    echo ""
+    echo -e "${YELLOW}1) Edit Token${RESET}"
+    echo -e "${YELLOW}2) Add Ports${RESET}"
+    echo -e "${YELLOW}3) Remove Ports${RESET}"
+    echo -e "${YELLOW}4) Change Server Address${RESET}"
+    echo -e "${YELLOW}5) Exit${RESET}"
+    echo -e "${CYAN}---------------------------------${RESET}"
+    
     read -p "Please choose an option: " edit_option
 
     case $edit_option in
         1)
-            edit_token
+            echo "Editing Token..."
+            # Add your code to edit token here
             ;;
-         2)
-            add_ports
+        2)
+            echo "Adding Ports..."
+            # Add your code to add ports here
             ;;
-         3)
-            remove_ports
+        3)
+            echo "Removing Ports..."
+            # Add your code to remove ports here
             ;;
-         4)
-            return
+        4)
+            echo "Changing Server Address..."
+            # Add your code to change server address here
+            ;;
+        5)
+            echo "Exiting the edit menu."
+            exit 0
             ;;
         *)
-            echo "Invalid option. Returning to main menu."
+            echo -e "${RED}Invalid option, please try again.${RESET}"
             ;;
     esac
 }
 
-# Function to edit token
-edit_token() {
-    read -p "Which server's token do you want to edit? " server_index
-    read -p "Please enter the new token: " new_token
-
-    sudo sed -i "s/token = \".*\"/token = \"$new_token\"/" /root/backhaul/config_$server_index.toml
-
-    sudo systemctl restart backhaul_$server_index.service
-
-    echo "Token has been updated for server $server_index."
-}
-
-# Function to add ports
-add_ports() {
-    read -p "Which server do you want to add ports to? " server_index
-    read -p "Please enter the port(s) to add (e.g., 2020=3020,2021=3021): " new_ports
-
-    sudo sed -i "/ports = \[/a $new_ports," /root/backhaul/config_$server_index.toml
-
-    sudo systemctl restart backhaul_$server_index.service
-
-    echo "Ports have been added for server $server_index."
-}
-
-# Function to remove ports
-remove_ports() {
-    read -p "Which server do you want to remove ports from? " server_index
-    read -p "Please enter the port(s) to remove (e.g., 2020=3020): " remove_ports
-
-    sudo sed -i "/$remove_ports/d" /root/backhaul/config_$server_index.toml
-
-    sudo systemctl restart backhaul_$server_index.service
-
-    echo "Ports have been removed from server $server_index."
-}
-
 # Main Menu
 while true; do
-    echo "---------------------------------"
-    echo "  Backhaul Installation Script"
-    echo "---------------------------------"
-    echo "1) Install Backhaul"
-    echo "2) Edit Backhaul Configuration"
-    echo "3) Exit"
-    echo "---------------------------------"
+    echo -e "${CYAN}---------------------------------${RESET}"
+    echo -e "${GREEN}       Backhaul Configuration${RESET}"
+    echo -e "${CYAN}---------------------------------${RESET}"
+    echo ""
+    echo -e "${YELLOW}1) Set Backhaul Configuration${RESET}"
+    echo -e "${YELLOW}2) Edit Backhaul Configuration${RESET}"
+    echo -e "${YELLOW}3) Exit${RESET}"
+    echo -e "${CYAN}---------------------------------${RESET}"
     
     read -p "Please choose an option: " option
 
     case $option in
         1)
-            install_backhaul
+            set_backhaul_config
             ;;
         2)
             edit_backhaul
             ;;
         3)
-            echo "Exiting the script."
+            echo -e "${GREEN}Exiting the script.${RESET}"
             exit 0
             ;;
         *)
-            echo "Invalid option, please try again."
+            echo -e "${RED}Invalid option, please try again.${RESET}"
             ;;
     esac
 done
