@@ -19,7 +19,7 @@ title() {
 # تابع برای نمایش منو
 show_menu() {
   echo -e "${BLUE}--------------------------------------${RESET}"
-  echo -e "${WHITE}    1) ${YELLOW}TCP Configuration${RESET}"
+  echo -e "${WHITE}    1) ${YELLOW}Tcp Configuration${RESET}"
   echo -e "${WHITE}    2) ${YELLOW}WS Configuration${RESET}"
   echo -e "${WHITE}    0) ${RED}Exit${RESET}"
   echo -e "${BLUE}--------------------------------------${RESET}"
@@ -27,9 +27,9 @@ show_menu() {
 
 # تابع برای اجرای TCP Configuration
 run_tcp_configuration() {
-  SCRIPT_URL="https://raw.githubusercontent.com/SamanGhn/BackHaul/main/tcp.sh"
+  # فرض کنید که فایل TCP.sh در همین دایرکتوری ذخیره شده است
   echo -e "${GREEN}Running TCP Configuration...${RESET}"
-  bash <(curl -Ls "$SCRIPT_URL")
+  bash TCP.sh  # اجرای اسکریپت TCP.sh
   echo -e "${GREEN}TCP Configuration completed.${RESET}"
   sleep 2  # تاخیر کوتاه برای مشاهده نتیجه
 }
