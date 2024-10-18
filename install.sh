@@ -9,7 +9,7 @@ show_menu() {
 
 # تابع برای اجرای TCP Configuration
 run_tcp_configuration() {
-  SCRIPT_URL="https://raw.githubusercontent.com/SamanGhn/BackHaul/main/tcp.sh"
+  SCRIPT_URL="https://raw.githubusercontent.com/SamanGhn/BackHaul/main/TCP.sh"
   echo "Running TCP Configuration..."
   bash <(curl -Ls "$SCRIPT_URL")
 }
