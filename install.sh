@@ -19,7 +19,7 @@ title() {
 # تابع برای نمایش منو
 show_menu() {
   echo -e "${BLUE}--------------------------------------${RESET}"
-  echo -e "${WHITE}    1) ${YELLOW}Tcp Configuration${RESET}"
+  echo -e "${WHITE}    1) ${YELLOW}TCP Configuration${RESET}"
   echo -e "${WHITE}    2) ${YELLOW}WS Configuration${RESET}"
   echo -e "${WHITE}    0) ${RED}Exit${RESET}"
   echo -e "${BLUE}--------------------------------------${RESET}"
