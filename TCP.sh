@@ -253,7 +253,7 @@ edit_backhaul() {
             # Add your code to change server address here
             ;;
         0)
-            echo -e "${GREEN}Returning to the main menu...${RESET}"
+            echo -e "${GREEN}Returning to the Configuration menu...${RESET}"
             return
             ;;
         *)
