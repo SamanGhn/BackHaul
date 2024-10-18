@@ -9,6 +9,8 @@ CYAN='\033[0;36m'
 WHITE='\033[1;37m'
 RESET='\033[0m'
 
+BACK_TO_MAIN=false
+
 # Function to set backhaul configuration
 set_backhaul_config() {
     echo -e "${CYAN}---------------------------------${RESET}"
