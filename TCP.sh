@@ -209,10 +209,11 @@ EOL
 }
 
 
+
 # Function to edit backhaul configuration
 edit_backhaul() {
     echo "---------------------------------"
-    echo "        Backhaul Edit Menu"
+    echo "  Backhaul Edit Menu"
     echo "---------------------------------"
     echo "1) Edit Token"
     echo "2) Add Ports"
@@ -233,11 +234,10 @@ edit_backhaul() {
             remove_ports
             ;;
         4)
-            echo "Returning to Main Menu..."
             return
             ;;
         *)
-            echo "Invalid option. Please choose a valid number from the menu."
+            echo "Invalid option, returning to Main Menu."
             ;;
     esac
 }
@@ -249,14 +249,11 @@ edit_token() {
 
     # Modify the token in the server configuration file
     sed -i "s/token = .*/token = \"$new_token\"/" /root/backhaul/config_$server_number.toml
-    echo "---------------------------------"
     echo "Token updated successfully for server $server_number."
-    echo "---------------------------------"
 
     # Reload and restart the service
     sudo systemctl daemon-reload
     sudo systemctl restart backhaul_$server_number.service
-    echo "Service restarted."
 }
 
 # Function to add ports
@@ -288,15 +285,14 @@ add_ports() {
     # Update the config file with the merged ports
     sed -i "/ports = \[/c\ports = [${all_ports}," /root/backhaul/config_$server_number.toml
 
-    echo "---------------------------------"
     echo "Ports added successfully to server $server_number."
-    echo "---------------------------------"
 
     # Reload and restart the service
     sudo systemctl daemon-reload
     sudo systemctl restart backhaul_$server_number.service
-    echo "Service restarted."
 }
+
+
 
 # Function to remove ports
 remove_ports() {
@@ -322,22 +318,16 @@ remove_ports() {
 
     # Update the config file with the remaining ports
     sed -i "/ports = \[/c\ports = [ $existing_ports ]" /root/backhaul/config_$server_number.toml
-
-    echo "---------------------------------"
     echo "Ports removed successfully from server $server_number."
-    echo "---------------------------------"
 
     # Reload and restart the service
     sudo systemctl daemon-reload
     sudo systemctl restart backhaul_$server_number.service
-    echo "Service restarted."
 }
 
 # Function to uninstall backhaul
 uninstall_backhaul() {
-    echo "---------------------------------"
-    echo "    Uninstalling Backhaul..."
-    echo "---------------------------------"
+    echo "Uninstalling backhaul..."
 
     # Stop and disable all backhaul services
     for service_file in /etc/systemd/system/backhaul_*.service; do
@@ -394,16 +384,11 @@ uninstall_backhaul() {
         echo "Logs and additional settings removed."
     fi
 
-    echo "---------------------------------"
     echo "Backhaul uninstalled successfully."
-    echo "---------------------------------"
 }
-
 # Function to update backhaul
 update_backhaul() {
-    echo "---------------------------------"
-    echo "    Updating Backhaul..."
-    echo "---------------------------------"
+    echo "Updating backhaul..."
 
     # Download the latest version and replace the existing binary
     wget https://github.com/Musixal/Backhaul/releases/download/v0.2.2/backhaul_linux_amd64.tar.gz -O backhaul_linux_update.tar.gz
@@ -415,9 +400,7 @@ update_backhaul() {
     # Reload systemd
     sudo systemctl daemon-reload
 
-    echo "---------------------------------"
     echo "Backhaul updated successfully."
-    echo "---------------------------------"
 }
 
 # Main menu loop
@@ -436,7 +419,7 @@ while true; do
 
     case $option in
         0)
-            echo "Exiting... Goodbye!"
+            echo "Exiting..."
             exit 0
             ;;
         1)
@@ -452,7 +435,7 @@ while true; do
             uninstall_backhaul
             ;;
         *)
-            echo "Invalid option. Please try again."
+            echo "Invalid option, please try again."
             ;;
     esac
 done
