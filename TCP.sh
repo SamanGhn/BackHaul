@@ -9,7 +9,7 @@ CYAN='\033[0;36m'
 WHITE='\033[1;37m'
 RESET='\033[0m'
 
-BACK_TO_MAIN=false
+current_menu="main"
 
 # Function to set backhaul configuration
 set_backhaul_config() {
@@ -265,36 +265,38 @@ edit_backhaul() {
 }
 
 # Main Menu
+# Main Backhaul Menu
 while true; do
-    echo -e "${CYAN}---------------------------------${RESET}"
-    echo -e "${GREEN}       Backhaul Configuration${RESET}"
-    echo -e "${CYAN}---------------------------------${RESET}"
-    echo ""
-    echo -e "${YELLOW}1) Set Backhaul Configuration${RESET}"
-    echo -e "${YELLOW}2) Edit Backhaul Configuration${RESET}"
-    echo -e "${RED}0) Back to main menu${RESET}"
-    echo -e "${CYAN}---------------------------------${RESET}"
-    
-    read -p "Please choose an option: " option
+    if [ "$current_menu" == "main" ]; then
+        echo -e "${CYAN}---------------------------------${RESET}"
+        echo -e "${GREEN}       Backhaul Configuration${RESET}"
+        echo -e "${CYAN}---------------------------------${RESET}"
+        echo ""
+        echo -e "${YELLOW}1) Set Backhaul Configuration${RESET}"
+        echo -e "${YELLOW}2) Edit Backhaul Configuration${RESET}"
+        echo -e "${RED}0) Back to main menu${RESET}"
+        echo -e "${CYAN}---------------------------------${RESET}"
 
-    case $option in
-        1)
-            set_backhaul_config
-            ;;
-        2)
-            edit_backhaul
-            ;;
-        0)
-            echo -e "${GREEN}Returning to the main menu...${RESET}"
-            continue
-            ;;
-        *)
-            echo -e "${RED}Invalid option, please try again.${RESET}"
-            ;;
-    esac
-    # بررسی اینکه آیا باید به منوی اصلی برگردیم
-    if [ "$BACK_TO_MAIN" = true ]; then
-        BACK_TO_MAIN=false  # بازنشانی برای بار بعدی
-        continue
+        read -p "Please choose an option: " option
+
+        case $option in
+            1)
+                set_backhaul_config
+                ;;
+            2)
+                edit_backhaul
+                ;;
+            0)
+                current_menu="main_menu"  # Change to main menu
+                ;;
+            *)
+                echo -e "${RED}Invalid option, please try again.${RESET}"
+                ;;
+        esac
+    fi
+
+    # Check if we need to go back to main menu
+    if [ "$current_menu" == "main_menu" ]; then
+        break  # Exit the Backhaul menu and go back to the main script
     fi
 done
