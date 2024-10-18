@@ -208,8 +208,6 @@ EOL
     fi
 }
 
-
-
 # Function to edit backhaul configuration
 edit_backhaul() {
     echo "---------------------------------"
@@ -227,201 +225,70 @@ edit_backhaul() {
         1)
             edit_token
             ;;
-        2)
+         2)
             add_ports
             ;;
-        3)
+         3)
             remove_ports
             ;;
-        4)
+         4)
             return
             ;;
         *)
-            echo "Invalid option, returning to Main Menu."
+            echo "Invalid option. Returning to main menu."
             ;;
     esac
 }
 
 # Function to edit token
 edit_token() {
-    read -p "Enter the number of the server you want to edit the token for: " server_number
-    read -p "Enter the new token: " new_token
+    read -p "Which server's token do you want to edit? " server_index
+    read -p "Please enter the new token: " new_token
 
-    # Modify the token in the server configuration file
-    sed -i "s/token = .*/token = \"$new_token\"/" /root/backhaul/config_$server_number.toml
-    echo "Token updated successfully for server $server_number."
+    sudo sed -i "s/token = \".*\"/token = \"$new_token\"/" /root/backhaul/config_$server_index.toml
 
-    # Reload and restart the service
-    sudo systemctl daemon-reload
-    sudo systemctl restart backhaul_$server_number.service
+    sudo systemctl restart backhaul_$server_index.service
+
+    echo "Token has been updated for server $server_index."
 }
 
 # Function to add ports
 add_ports() {
-    read -p "Enter the number of the server you want to add ports to: " server_number
-    read -p "Enter the new ports as a comma-separated list (e.g., 2025,2026): " new_ports
+    read -p "Which server do you want to add ports to? " server_index
+    read -p "Please enter the port(s) to add (e.g., 2020=3020,2021=3021): " new_ports
 
-    # Convert the new ports into the appropriate format
-    IFS=',' read -r -a new_ports_array <<< "$new_ports"
-    formatted_ports=()
+    sudo sed -i "/ports = \[/a $new_ports," /root/backhaul/config_$server_index.toml
 
-    for port in "${new_ports_array[@]}"; do
-        formatted_ports+=("\"$port=$port\"")
-    done
+    sudo systemctl restart backhaul_$server_index.service
 
-    # Read the existing ports from the config file
-    existing_ports=$(grep -oP '(?<=ports = \[).*(?=\])' /root/backhaul/config_$server_number.toml)
-
-    # Remove any trailing commas or spaces from the existing ports
-    existing_ports=$(echo "$existing_ports" | sed 's/^[ ,]*//;s/[ ,]*$//')
-
-    # Combine the existing ports with the new ones (if existing ports are not empty)
-    if [ -n "$existing_ports" ]; then
-        all_ports="$existing_ports,$(IFS=,; echo "${formatted_ports[*]}")"
-    else
-        all_ports=$(IFS=,; echo "${formatted_ports[*]}")
-    fi
-
-    # Update the config file with the merged ports
-    sed -i "/ports = \[/c\ports = [${all_ports}," /root/backhaul/config_$server_number.toml
-
-    echo "Ports added successfully to server $server_number."
-
-    # Reload and restart the service
-    sudo systemctl daemon-reload
-    sudo systemctl restart backhaul_$server_number.service
+    echo "Ports have been added for server $server_index."
 }
-
-
 
 # Function to remove ports
 remove_ports() {
-    read -p "Enter the number of the server you want to remove ports from: " server_number
-    read -p "Enter the ports to remove as a comma-separated list (e.g., 2025,2026): " remove_ports
+    read -p "Which server do you want to remove ports from? " server_index
+    read -p "Please enter the port(s) to remove (e.g., 2020=3020): " remove_ports
 
-    IFS=',' read -r -a remove_ports_array <<< "$remove_ports"
+    sudo sed -i "/$remove_ports/d" /root/backhaul/config_$server_index.toml
 
-    # Read the existing ports from the config file
-    existing_ports=$(grep -oP '(?<=ports = \[)[^\]]*' /root/backhaul/config_$server_number.toml)
+    sudo systemctl restart backhaul_$server_index.service
 
-    # Remove leading/trailing whitespace and commas from existing_ports
-    existing_ports=$(echo "$existing_ports" | sed 's/^[ ,]*//;s/[ ,]*$//')
-
-    # Remove specified ports from the existing ports
-    for port in "${remove_ports_array[@]}"; do
-        existing_ports=$(echo "$existing_ports" | sed "s/\"$port=$port\"//g")
-    done
-
-    # Remove extra commas and spaces
-    existing_ports=$(echo "$existing_ports" | sed 's/,,*/,/g')
-    existing_ports=$(echo "$existing_ports" | sed 's/^[ ,]*//;s/[ ,]*$//')
-
-    # Update the config file with the remaining ports
-    sed -i "/ports = \[/c\ports = [ $existing_ports ]" /root/backhaul/config_$server_number.toml
-    echo "Ports removed successfully from server $server_number."
-
-    # Reload and restart the service
-    sudo systemctl daemon-reload
-    sudo systemctl restart backhaul_$server_number.service
+    echo "Ports have been removed from server $server_index."
 }
 
-# Function to uninstall backhaul
-uninstall_backhaul() {
-    echo "Uninstalling backhaul..."
-
-    # Stop and disable all backhaul services
-    for service_file in /etc/systemd/system/backhaul_*.service; do
-        if [ -f "$service_file" ]; then
-            service_name=$(basename "$service_file")
-            sudo systemctl stop $service_name
-            sudo systemctl disable $service_name
-            sudo rm "$service_file"
-            echo "Removed service file: $service_file"
-            
-            # Reload systemd and reset failed services after each service is removed
-            sudo systemctl daemon-reload
-            sudo systemctl reset-failed
-        fi
-    done
-
-    # Remove backhaul binary and config files
-    if [ -f /usr/bin/backhaul ]; then
-        sudo rm /usr/bin/backhaul
-        echo "Removed /usr/bin/backhaul"
-    fi
-
-    if [ -d /root/backhaul ]; then
-        sudo rm -rf /root/backhaul
-        echo "Removed /root/backhaul directory"
-    fi
-
-    # Reload systemd to apply changes
-    sudo systemctl daemon-reload
-    sudo systemctl reset-failed
-
-    # Ask the user if they want to remove logs and additional settings
-    read -p "Do you want to remove logs and additional settings (log_level, web_port, sniffer_log)? (y/n): " remove_logs
-
-    if [ "$remove_logs" == "y" ]; then
-        echo "Removing logs and additional configuration settings..."
-
-        # Remove log files
-        if [ -f /root/backhaul.json ]; then
-            sudo rm /root/backhaul.json
-            echo "Removed /root/backhaul.json"
-        fi
-
-        # Loop through all remaining configuration files and remove log_level, web_port, and sniffer_log
-        for config_file in /root/backhaul/config_*.toml; do
-            if [ -f "$config_file" ]; then
-                sudo sed -i '/log_level/d' "$config_file"
-                sudo sed -i '/web_port/d' "$config_file"
-                sudo sed -i '/sniffer_log/d' "$config_file"
-                echo "Removed log_level, web_port, and sniffer_log from $config_file"
-            fi
-        done
-
-        echo "Logs and additional settings removed."
-    fi
-
-    echo "Backhaul uninstalled successfully."
-}
-# Function to update backhaul
-update_backhaul() {
-    echo "Updating backhaul..."
-
-    # Download the latest version and replace the existing binary
-    wget https://github.com/Musixal/Backhaul/releases/download/v0.2.2/backhaul_linux_amd64.tar.gz -O backhaul_linux_update.tar.gz
-    tar -xf backhaul_linux_update.tar.gz
-    rm backhaul_linux_update.tar.gz LICENSE README.md
-    chmod +x backhaul
-    sudo mv backhaul /usr/bin/backhaul
-
-    # Reload systemd
-    sudo systemctl daemon-reload
-
-    echo "Backhaul updated successfully."
-}
-
-# Main menu loop
+# Main Menu
 while true; do
     echo "---------------------------------"
-    echo "  Backhaul Management Menu"
+    echo "  Backhaul Installation Script"
     echo "---------------------------------"
-    echo "0) Exit"
     echo "1) Install Backhaul"
-    echo "2) Edit Backhaul"
-    echo "3) Update Backhaul"
-    echo "4) Uninstall Backhaul"
+    echo "2) Edit Backhaul Configuration"
+    echo "3) Exit"
     echo "---------------------------------"
-
+    
     read -p "Please choose an option: " option
 
     case $option in
-        0)
-            echo "Exiting..."
-            exit 0
-            ;;
         1)
             install_backhaul
             ;;
@@ -429,10 +296,8 @@ while true; do
             edit_backhaul
             ;;
         3)
-            update_backhaul
-            ;;
-        4)
-            uninstall_backhaul
+            echo "Exiting the script."
+            exit 0
             ;;
         *)
             echo "Invalid option, please try again."
