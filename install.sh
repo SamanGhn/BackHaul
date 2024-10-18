@@ -21,6 +21,7 @@ show_menu() {
   echo -e "${BLUE}--------------------------------------${RESET}"
   echo -e "${WHITE}    1) ${YELLOW}Tcp Configuration${RESET}"
   echo -e "${WHITE}    2) ${YELLOW}WS Configuration${RESET}"
+  echo -e "${WHITE}    3) ${YELLOW}Uninstall Backhaul${RESET}"  # گزینه جدید اضافه شد
   echo -e "${WHITE}    0) ${RED}Exit${RESET}"
   echo -e "${BLUE}--------------------------------------${RESET}"
 }
@@ -47,6 +48,68 @@ run_ws_configuration() {
   sleep 2  # تاخیر کوتاه برای مشاهده نتیجه
 }
 
+# تابع برای Uninstall Backhaul
+uninstall_backhaul() {
+    echo "Uninstalling backhaul..."
+
+    # Stop and disable all backhaul services
+    for service_file in /etc/systemd/system/backhaul_*.service; do
+        if [ -f "$service_file" ]; then
+            service_name=$(basename "$service_file")
+            sudo systemctl stop $service_name
+            sudo systemctl disable $service_name
+            sudo rm "$service_file"
+            echo "Removed service file: $service_file"
+            
+            # Reload systemd and reset failed services after each service is removed
+            sudo systemctl daemon-reload
+            sudo systemctl reset-failed
+        fi
+    done
+
+    # Remove backhaul binary and config files
+    if [ -f /usr/bin/backhaul ]; then
+        sudo rm /usr/bin/backhaul
+        echo "Removed /usr/bin/backhaul"
+    fi
+
+    if [ -d /root/backhaul ]; then
+        sudo rm -rf /root/backhaul
+        echo "Removed /root/backhaul directory"
+    fi
+
+    # Reload systemd to apply changes
+    sudo systemctl daemon-reload
+    sudo systemctl reset-failed
+
+    # Ask the user if they want to remove logs and additional settings
+    read -p "Do you want to remove logs and additional settings (log_level, web_port, sniffer_log)? (y/n): " remove_logs
+
+    if [ "$remove_logs" == "y" ]; then
+        echo "Removing logs and additional configuration settings..."
+
+        # Remove log files
+        if [ -f /root/backhaul.json ]; then
+            sudo rm /root/backhaul.json
+            echo "Removed /root/backhaul.json"
+        fi
+
+        # Loop through all remaining configuration files and remove log_level, web_port, and sniffer_log
+        for config_file in /root/backhaul/config_*.toml; do
+            if [ -f "$config_file" ]; then
+                sudo sed -i '/log_level/d' "$config_file"
+                sudo sed -i '/web_port/d' "$config_file"
+                sudo sed -i '/sniffer_log/d' "$config_file"
+                echo "Removed log_level, web_port, and sniffer_log from $config_file"
+            fi
+        done
+
+        echo "Logs and additional settings removed."
+    fi
+
+    echo "Backhaul uninstalled successfully."
+}
+
 # تابع برای خروج
 exit_program() {
   echo -e "${RED}Exiting...${RESET}"
@@ -65,6 +128,9 @@ while true; do
       ;;
     2)
       run_ws_configuration  # انتخاب WS
+      ;;
+    3)
+      uninstall_backhaul  # Uninstall Backhaul
       ;;
     0)
       exit_program  # خروج
