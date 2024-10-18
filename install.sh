@@ -2,7 +2,7 @@
 
 # تابع برای نمایش منو
 show_menu() {
-  echo "1) Tcp Configuration"
+  echo "1) TCP Configuration"
   echo "2) WS Configuration"
   echo "3) Exit"
 }
