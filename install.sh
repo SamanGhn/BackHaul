@@ -61,7 +61,7 @@ run_ws_configuration() {
   echo -e "${GREEN}Running WS Configuration...${RESET}"
   
   # اجرای اسکریپت WS.sh از گیت‌هاب (فرض می‌کنیم آدرس درست باشد)
-  bash <(curl -Ls https://raw.githubusercontent.com/SamanGhn/BackHaul/main/ws.sh)
+  bash <(curl -Ls https://raw.githubusercontent.com/SamanGhn/BackHaul/main/WS.sh)
   
   echo -e "${GREEN}WS Configuration completed.${RESET}"
   sleep 2  # تاخیر کوتاه برای مشاهده نتیجه
