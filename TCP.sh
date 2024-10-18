@@ -230,7 +230,7 @@ edit_backhaul() {
     echo -e "${YELLOW}2) Add Ports${RESET}"
     echo -e "${YELLOW}3) Remove Ports${RESET}"
     echo -e "${YELLOW}4) Change Server Address${RESET}"
-    echo -e "${YELLOW}0) Back to Configuration menu${RESET}"
+    echo -e "${RED}0) Back to Configuration menu${RESET}"
     echo -e "${CYAN}---------------------------------${RESET}"
     
     read -p "Please choose an option: " edit_option
@@ -270,7 +270,7 @@ while true; do
     echo ""
     echo -e "${YELLOW}1) Set Backhaul Configuration${RESET}"
     echo -e "${YELLOW}2) Edit Backhaul Configuration${RESET}"
-    echo -e "${YELLOW}0) Back to main menu${RESET}"
+    echo -e "${RED}0) Back to main menu${RESET}"
     echo -e "${CYAN}---------------------------------${RESET}"
     
     read -p "Please choose an option: " option
