@@ -230,7 +230,7 @@ edit_backhaul() {
     echo -e "${YELLOW}2) Add Ports${RESET}"
     echo -e "${YELLOW}3) Remove Ports${RESET}"
     echo -e "${YELLOW}4) Change Server Address${RESET}"
-    echo -e "${YELLOW}5) Exit${RESET}"
+    echo -e "${YELLOW}0) Back to Configuration menu${RESET}"
     echo -e "${CYAN}---------------------------------${RESET}"
     
     read -p "Please choose an option: " edit_option
@@ -252,9 +252,9 @@ edit_backhaul() {
             echo "Changing Server Address..."
             # Add your code to change server address here
             ;;
-        5)
-            echo "Exiting the edit menu."
-            exit 0
+        0)
+            echo -e "${GREEN}Returning to the main menu...${RESET}"
+            return
             ;;
         *)
             echo -e "${RED}Invalid option, please try again.${RESET}"
@@ -270,7 +270,7 @@ while true; do
     echo ""
     echo -e "${YELLOW}1) Set Backhaul Configuration${RESET}"
     echo -e "${YELLOW}2) Edit Backhaul Configuration${RESET}"
-    echo -e "${YELLOW}3) Exit${RESET}"
+    echo -e "${YELLOW}0) Back to main menu${RESET}"
     echo -e "${CYAN}---------------------------------${RESET}"
     
     read -p "Please choose an option: " option
@@ -282,9 +282,9 @@ while true; do
         2)
             edit_backhaul
             ;;
-        3)
-            echo -e "${GREEN}Exiting the script.${RESET}"
-            exit 0
+        0)
+            echo -e "${GREEN}Returning to the main menu...${RESET}"
+            continue
             ;;
         *)
             echo -e "${RED}Invalid option, please try again.${RESET}"
