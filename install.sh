@@ -27,18 +27,22 @@ show_menu() {
 
 # تابع برای اجرای TCP Configuration
 run_tcp_configuration() {
-  # فرض کنید که فایل TCP.sh در همین دایرکتوری ذخیره شده است
   echo -e "${GREEN}Running TCP Configuration...${RESET}"
-  bash TCP.sh  # اجرای اسکریپت TCP.sh
+  
+  # اجرای اسکریپت TCP.sh از گیت‌هاب
+  bash <(curl -Ls https://raw.githubusercontent.com/SamanGhn/BackHaul/main/TCP.sh)
+  
   echo -e "${GREEN}TCP Configuration completed.${RESET}"
   sleep 2  # تاخیر کوتاه برای مشاهده نتیجه
 }
 
 # تابع برای اجرای WS Configuration
 run_ws_configuration() {
-  SCRIPT_URL="https://raw.githubusercontent.com/SamanGhn/BackHaul/main/ws.sh"  # فرض می‌کنیم اسکریپت مربوط به WS اینجا موجود است
   echo -e "${GREEN}Running WS Configuration...${RESET}"
-  bash <(curl -Ls "$SCRIPT_URL")
+  
+  # اجرای اسکریپت WS.sh از گیت‌هاب (فرض می‌کنیم آدرس درست باشد)
+  bash <(curl -Ls https://raw.githubusercontent.com/SamanGhn/BackHaul/main/ws.sh)
+  
   echo -e "${GREEN}WS Configuration completed.${RESET}"
   sleep 2  # تاخیر کوتاه برای مشاهده نتیجه
 }
@@ -57,13 +61,13 @@ while true; do
   read -p "Choose an option: " choice
   case $choice in
     1)
-      run_tcp_configuration
+      run_tcp_configuration  # انتخاب TCP
       ;;
     2)
-      run_ws_configuration
+      run_ws_configuration  # انتخاب WS
       ;;
     0)
-      exit_program
+      exit_program  # خروج
       ;;
     *)
       echo -e "${RED}Invalid option. Please try again.${RESET}"
