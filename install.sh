@@ -19,12 +19,30 @@ title() {
 # تابع برای نمایش منو
 show_menu() {
   echo -e "${BLUE}--------------------------------------${RESET}"
-  echo -e "${WHITE}    1) ${YELLOW}Tcp Configuration${RESET}"
-  echo -e "${WHITE}    2) ${YELLOW}WS Configuration${RESET}"
-  echo -e "${WHITE}    3) ${YELLOW}Install/Update Core${RESET}"
-  echo -e "${WHITE}    4) ${YELLOW}Uninstall Backhaul${RESET}"  # گزینه جدید اضافه شد
+  echo -e "${WHITE}    1) ${YELLOW}Install/Update Core${RESET}"
+  echo -e "${WHITE}    2) ${YELLOW}Tcp Configuration${RESET}"
+  echo -e "${WHITE}    3) ${YELLOW}WS Configuration${RESET}"
+  echo -e "${WHITE}    4) ${YELLOW}Uninstall Backhaul${RESET}"
   echo -e "${WHITE}    0) ${RED}Exit${RESET}"
   echo -e "${BLUE}--------------------------------------${RESET}"
+}
+
+# تابع برای نصب یا بروزرسانی Core
+install_update_core() {
+  echo -e "${GREEN}Installing or Updating Backhaul Core...${RESET}"
+
+  mkdir -p backhaul
+  cd backhaul || { echo -e "${RED}Failed to change directory!${RESET}"; exit 1; }
+
+  wget https://github.com/Musixal/Backhaul/releases/download/v0.6.0/backhaul_linux_amd64.tar.gz -O backhaul_linux.tar.gz
+  tar -xf backhaul_linux.tar.gz
+  rm backhaul_linux.tar.gz LICENSE README.md
+  chmod +x backhaul
+  mv backhaul /usr/bin/backhaul
+
+  echo -e "${GREEN}Core installation/update completed.${RESET}"
+  cd ..
+  sleep 2  # تاخیر کوتاه برای مشاهده نتیجه
 }
 
 # تابع برای اجرای TCP Configuration
@@ -46,24 +64,6 @@ run_ws_configuration() {
   bash <(curl -Ls https://raw.githubusercontent.com/SamanGhn/BackHaul/main/ws.sh)
   
   echo -e "${GREEN}WS Configuration completed.${RESET}"
-  sleep 2  # تاخیر کوتاه برای مشاهده نتیجه
-}
-
-# تابع برای نصب یا بروزرسانی Core
-install_update_core() {
-  echo -e "${GREEN}Installing or Updating Backhaul Core...${RESET}"
-
-  mkdir -p backhaul
-  cd backhaul || { echo -e "${RED}Failed to change directory!${RESET}"; exit 1; }
-
-  wget https://github.com/Musixal/Backhaul/releases/download/v0.6.0/backhaul_linux_amd64.tar.gz -O backhaul_linux.tar.gz
-  tar -xf backhaul_linux.tar.gz
-  rm backhaul_linux.tar.gz LICENSE README.md
-  chmod +x backhaul
-  mv backhaul /usr/bin/backhaul
-
-  echo -e "${GREEN}Core installation/update completed.${RESET}"
-  cd ..
   sleep 2  # تاخیر کوتاه برای مشاهده نتیجه
 }
 
@@ -143,13 +143,13 @@ while true; do
   read -p "Choose an option: " choice
   case $choice in
     1)
-      run_tcp_configuration  # انتخاب TCP
+      install_update_core  # نصب یا بروزرسانی Core
       ;;
     2)
-      run_ws_configuration  # انتخاب WS
+      run_tcp_configuration  # انتخاب TCP
       ;;
     3)
-      install_update_core  # نصب یا بروزرسانی Core
+      run_ws_configuration  # انتخاب WS
       ;;
     4)
       uninstall_backhaul  # Uninstall Backhaul
