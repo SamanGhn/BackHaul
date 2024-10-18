@@ -256,7 +256,7 @@ edit_backhaul() {
             ;;
         0)
             echo -e "${GREEN}Returning to the Configuration menu...${RESET}"
-            return
+            BACK_TO_MAIN=true
             ;;
         *)
             echo -e "${RED}Invalid option, please try again.${RESET}"
