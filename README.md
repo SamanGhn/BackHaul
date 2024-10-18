@@ -4,3 +4,6 @@
 ```
 bash <(curl -Ls https://raw.githubusercontent.com/SamanGhn/BackHaul/main/install.sh)
 ```
+
+- First install/update Core
+- set Configuration WS or TCP
